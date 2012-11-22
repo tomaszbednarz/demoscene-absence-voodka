@@ -1,0 +1,28 @@
+
+Locals
+.386
+CODE32 SEGMENT PUBLIC PARA 'CODE' USE32
+ASSUME  CS:CODE32,DS:CODE32,ES:CODE32
+
+INCLUDE \TASM\EOS\EOS.INC
+INCLUDE system.pm
+INCLUDE video.pm
+INCLUDE	virtual.pm
+
+Start32:
+		call 	Allocate_System
+		Set13h
+
+		LoadVirtualObjects 'objects\world'
+
+ Keye:
+		KeyTo Escape,Keye
+
+
+
+		mov ax,04c00h
+		int 21h
+
+CODE32 ENDS
+
+END Start32

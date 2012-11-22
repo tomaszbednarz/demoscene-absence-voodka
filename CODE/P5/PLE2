@@ -1,0 +1,66 @@
+
+
+Transform:
+	push edx ebp
+
+ TransXYZ:
+	push ecx
+	
+	mov ebx,[esi]
+	mov edi,[esi+4]
+	mov ecx,[esi+8]
+
+	mov eax,ebx
+	imul d [MatrixCamera+mx11]
+	sar eax,15
+	mov ebp,eax
+	mov eax,edi
+	imul d [MatrixCamera+mx21]
+	sar eax,15
+	add ebp,eax
+	mov eax,ecx
+	imul d [MatrixCamera+mx31]
+	sar eax,15
+	add ebp,eax
+	mov [esi],ebp
+
+	mov eax,ebx
+	imul d [MatrixCamera+mx12]
+	sar eax,15
+	mov ebp,eax
+	mov eax,edi
+	imul d [MatrixCamera+mx22]
+	sar eax,15
+	add ebp,eax
+	mov eax,ecx
+	imul d [MatrixCamera+mx32]
+	sar eax,15
+	add ebp,eax
+	mov [esi+4],ebp
+
+	mov eax,ebx
+	imul d [MatrixCamera+mx13]
+	sar eax,15
+	mov ebp,eax
+	mov eax,edi
+	imul d [MatrixCamera+mx23]
+	sar eax,15
+	add ebp,eax
+	mov eax,ecx
+	imul d [MatrixCamera+mx33]
+	sar eax,15
+	add ebp,eax
+	mov [esi+8],ebp
+
+	add esi,12
+	
+	pop ecx
+	dec ecx
+	jnz TransXYZ
+
+	pop ebp edx
+
+	ret
+
+
+

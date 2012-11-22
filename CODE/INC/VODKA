@@ -1,0 +1,13 @@
+
+
+EXTRN   _file_addr      : DWORD
+
+vodka   macro val,adrzz
+                mov     esi,_file_addr
+                mov     ecx,[esi+val*8+4]
+                mov     eax,[esi+val*8]
+                add     esi,eax
+                mov     eax,esi
+                mov     [adrzz],eax
+                add     esi,Code32_addr
+        endm

@@ -1,0 +1,30 @@
+
+; in:
+;	eax - value to write
+; 	dl  - x position
+; 	dh  - y position
+
+h:
+write_hex:
+        pushad
+;xor dx,dx
+	mov tomek,eax
+;	mov ah,2
+;	DosInt 10h
+        mov ecx,8
+  l11: 
+	rol tomek,4
+        mov al,byte ptr tomek
+        and al,0fh
+        cmp al,10
+	jb j8
+        add al,'A'-'0'-10
+  j8: 	
+	add al,'0'
+        mov dl,al
+        mov ah,02h
+        int 21h
+        loop l11
+        popad
+	ret
+	tomek dd 0

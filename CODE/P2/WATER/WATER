@@ -1,0 +1,84 @@
+
+;obrazek.dat - rozmiar 160x100 o odcieniach szarosci :)
+;bufor1.dat - romiar 320*100 - nagly wyplyw wody
+
+_waterPIC       dd ?
+_obrazek2 dd ?
+_paleta  dd ?
+_bufor1 dd ?
+_bufor2 dd ?
+_bufor3 dd ?
+npage   dd 0
+
+ofset dd 0
+x_of    dd 10
+y_of    dd 50
+x_jest  db 0
+y_jest  db 0
+
+licznik dd 0
+
+pikus:
+        vodka 19,_waterPIC
+        vodka 17,_obrazek2
+        vodka 18,_paleta
+
+        mov esi,[_waterPIC]
+        mov edi,_0A0000H
+        mov ecx,16000
+        rep movsd
+
+        mov esi,_paleta
+        call SetPal
+        AllocateMemoryFree 320*200*2,_bufor1
+        AllocateMemoryFree 320*200*2,_bufor2
+
+ Keye:
+
+        mov eax,licznik
+        and eax,127
+        mov ebx,[tablica3+eax*4]
+        mov ofset,ebx
+        mov esi,_bufor1
+        add esi,ofset
+        mov b [esi],0ffh
+        mov b [esi+2],0ffh
+        mov b [esi+4],0ffh
+        mov b [esi+640],0ffh
+        mov b [esi+642],0ffh
+        mov b [esi+644],0ffh
+        mov eax,ramki
+        cmp eax,2
+        jge nic
+        add licznik,1
+        jmp ouss
+nic:    shr eax,1
+        add licznik,eax
+ouss:
+
+        mov esi,[_waterPIC]
+        mov edi,[_screen]
+        mov ecx,16000
+        rep movsd
+
+        call drawWater
+
+        call calculateWater
+        inc nPage
+
+        mov ah,wait_vbl
+        int_eos
+        mov ramki,eax
+        Ekran
+
+        call    GetModPos
+        cmp     Modpos,73fh
+        jle     Keye
+        lea     esi,white
+        call    pal_set
+        ret
+
+;       KeyTo Escape,Keye
+;       ret
+
+include water\water.pm

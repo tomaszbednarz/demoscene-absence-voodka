@@ -1,0 +1,5 @@
+asm:	@tasm !.! 
+	@tlink /x/3/t ! 
+	@del !.obj
+	@del !.v3d
+	@ren !.com !.v3d

@@ -1,0 +1,89 @@
+
+	in al,60h
+	cmp al,Up ;72 ;Z camery 
+	je posZP
+	cmp al,Down ;Z camery 
+	je posZM
+	cmp al,Left ;X camery 
+	je posXM
+	cmp al,Right ;X camety
+	je posXP
+	cmp al,Num_7 ;Home Y camera
+	je posYM
+	cmp al,Num_1 ;Home Y camera
+	je posYP
+	cmp al,key_f1 ;eyeX 
+	je angXP
+	cmp al,Key_f2 ;eyeX 
+	je angXM
+	cmp al,key_f5 ;eyey 
+	je angyP
+	cmp al,Key_f6 ;eyey 
+	je angyM
+	cmp al,key_f9 ;eyez 
+	je angzP
+	cmp al,Key_f10 ;eyez
+	je angzM
+	cmp al,Return ;save position
+	je savePos
+	cmp al,key_f4
+	je ice_e
+
+	JMP outttt
+ ice_e:
+	add trasa_ruch,10
+	jmp virtual
+ savePos:
+	mov eax,Ruch
+	mov ebx,24
+	mul ebx
+	mov ebx,CameraX
+	mov d [Kamera_ruch+eax],ebx
+	mov ebx,CameraY
+	mov d [Kamera_ruch+eax+4],ebx
+	mov ebx,CameraZ
+	mov d [Kamera_ruch+eax+8],ebx
+	mov ebx,EyeAx
+	mov d [Kamera_ruch+eax+12],ebx
+	mov ebx,EyeAy
+	mov d [Kamera_ruch+eax+16],ebx
+	mov ebx,EyeAz
+	mov d [Kamera_ruch+eax+20],ebx
+	inc Ruch
+
+	mov ecx,0ffffffh
+	idfd: loop idfd
+	jmp virtual
+ angXP:	add eyeax,8
+	jmp virtual
+ angXM:	sub eyeax,8
+	jmp virtual
+ angyP:	add eyeay,8
+	jmp virtual
+ angyM:	sub eyeay,8
+	jmp virtual
+ angzP:	add eyeaz,8
+	jmp virtual
+ angzM:	sub eyeaz,8
+	jmp virtual
+ posZP:	inc cameraZ
+ADD cameraz,40*16
+	jmp virtual
+ posZM:	dec cameraZ
+SUB CameraZ,40*16
+	jmp virtual
+ posXM:	dec camerax
+sub cameraX,40*16
+	jmp virtual
+ posXP:	inc camerax
+add cameraX,40*16
+	jmp virtual
+ posYM:	dec cameray
+sub cameraY,40*16
+	jmp virtual
+ posYP:	inc cameray
+add cameraY,40*16
+	jmp virtual
+
+ outttt:
+ virtual:

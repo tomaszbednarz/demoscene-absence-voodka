@@ -1,0 +1,40 @@
+
+;edx - nazwa
+
+dlug            dw      0
+adres           dd      0
+
+load_file:      mov     ax,3d00h
+                int     21h
+                jc      dupa
+                mov     bx,ax
+                mov     cx,0
+                mov     dx,0
+                mov     ax,4202h
+                int     21h
+                mov     dlug,ax
+                mov     cx,0
+                mov     dx,0
+                mov     ax,4200h
+                int     21h
+                movzx   edx,dlug
+                mov     ah,Allocate_Memory
+                Int_EOS
+                mov     adres,edx
+                mov     cx,dlug
+                mov     ax,3f00h
+                int     21h
+                jc      dupa
+                mov     ax,3e00h
+                int     21h
+                jc      dupa
+back:           mov     eax,adres
+                mov     esi,eax
+                add     esi,Code32_addr
+                movzx   ecx,dlug
+                ret
+
+dupa:           mov     dl,7
+                mov     ah,2
+                DosInt  21h
+                jmp     back

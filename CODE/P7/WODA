@@ -1,0 +1,9 @@
+	mov eax,licznik
+	and eax,127
+	mov ebx,[tablica3+eax*4]
+	mov ofset,ebx
+	mov esi,_bufor1
+	add esi,ofset
+	mov b [esi],0ffh
+	mov eax,ramki
+	add licznik,eax

@@ -1,0 +1,255 @@
+
+muzak=1
+startPattern=0
+
+Locals
+.386
+CODE32 SEGMENT PUBLIC PARA 'CODE' USE32
+ASSUME  CS:CODE32,DS:CODE32,ES:CODE32
+
+INCLUDE D:\TASM\EOS\EOS.INC
+INCLUDE inc\system.pm
+include inc\engine.inc
+INCLUDE inc\pal
+
+fn      dd ?
+
+PUBLIC  start32
+EXTRN   part1   :NEAR
+EXTRN   part2   :NEAR
+EXTRN   part3   :NEAR
+EXTRN   part4   :NEAR
+EXTRN   part5   :NEAR
+EXTRN   part6   :NEAR
+EXTRN   part7   :NEAR
+EXTRN   part8   :NEAR
+
+extrn prep_sort:near
+
+PUBLIC GetModPos
+PUBLIC ModPos
+
+
+vodka   macro val,adrzz
+                mov     esi,_file_addr
+                mov     ecx,[esi+val*8+4]
+                mov     eax,[esi+val*8]
+                add     esi,eax
+                mov     eax,esi
+                mov     [adrzz],eax
+                add     esi,Code32_addr
+        endm
+
+module_name     db 'amnezja2.mod',0
+
+PUBLIC _file_addr
+_file_addr      dd      0
+PUBLIC _scr_addr
+PUBLIC _scrSel
+_scr_addr       dd      0
+_scrSel         dw      0
+
+public sinus
+sinus label word
+include sinus.inc
+public len
+len dd 0
+
+extrn prepare_twist:near
+
+PUBLIC _tableToonel
+_tableToonel    dd ?
+
+Start32:        cld
+
+                mov ah,allocate_memory
+                mov edx,-1
+                int_eos
+                cmp eax,6800000
+                jl no_mem
+
+                LoadFile "voodka.dat",_file_addr
+                include part2
+                AllocateMemory 128000,_tableToonel
+                call makeTableToonel
+
+                mov     ah,Allocate_Memory
+                mov     edx,320*200
+                Int_EOS
+                mov     _scr_addr,edx
+                mov     esi,eax
+                mov     esi,eax
+                mov     edi,-1
+                mov     ah,allocate_selector
+                int_eos
+                mov     _scrSel,bx
+
+                mov edi,_scr_addr
+                xor eax,eax
+                mov ecx,16000
+                rep stosd
+
+                call    prep_sort
+
+                mov     ah,use_int_08
+                mov     bx,On
+                Int_EOS
+
+                mov ah,Use_Int_09
+                mov bx,On
+                int_Eos
+
+                call    pal_read
+                mov     _pomek,64
+
+ifdef muzak
+                mov     ah,Detect_Sound_Card
+                xor     bx,bx
+                mov     cx,1
+                Int_EOS
+                mov     ah,Load_Module
+                mov     al,1
+                mov     bx,44000
+                mov     edx,o module_name
+                Int_EOS
+endif
+                call    prepare_twist
+
+                mov     ah,Set_Pattern
+                mov     bx,startPattern
+                int_EOS
+
+                mov     ah,Play_Module
+                Int_EOS
+
+spadaj:         lea     esi,pal_pom
+                call    pal_set
+                lea     esi,pal_pom
+                mov     ecx,768
+asd:            lodsb
+                or al,al
+                jz nosd
+                dec   al
+                mov [esi-1],al
+nosd:           loop asd
+                dec     _pomek
+                jnz     spadaj
+
+wa:             call    GetModPos
+                cmp     ModPos,010h
+                jl      wa
+
+                mov     ax,13h
+                dosint     10h
+
+                call    Part1
+                call    Part2
+                call    Part3
+                call    Part4
+                call    Part5
+                call    Part6
+                call    Part7
+                call    Part8
+
+                mov     ah,Clear_Module
+                Int_EOS
+
+                mov     ah,use_int_08
+                mov     bx,Off
+                Int_EOS
+                mov     ah,use_int_09
+                mov     bx,Off
+                Int_EOS
+
+                mov     bx,_scrSel
+                mov     ah,deallocate_selector
+                int_eos
+
+                mov     ax,04c00h
+                int     21h
+
+
+                stosF dw 0
+                Zooming equ 3000
+makeTableToonel:
+        xor edi,edi
+        mov esi,o StosF
+        mov edx,[_tableToonel]
+        mov bx,-100
+ pilujY:
+        mov cx,-160
+ pilujX:
+        mov [esi],cx ;<-X
+        fild w [esi] ;st(0)=X
+        mov [esi],bx ;<-Y
+        fild w [esi] ;st(0)=Y
+        fpatan
+        mov w [esi],128
+        fimul w [esi]
+        fldpi
+        fdivp st(1),st
+        fistp w [esi]
+        mov ax,[esi]
+        mov [edx+edi],al
+        mov w [esi],zooming
+        fild w [esi]
+        mov [esi],cx
+        fild w [esi]
+        fmul st,st(0)
+        mov [esi],bx
+        fild w [esi]
+        fmul st,st(0)
+        faddp st(1),st
+        fsqrt
+        fdivp st(1),st
+        fistp w [esi]
+        mov ax,[esi]
+        mov [edx+64000+edi],al
+        inc edi
+        inc cx
+        cmp cx,160
+        jne PilujX
+        inc bx
+        cmp bx,100
+        jne PilujY
+        mov ecx,32000
+        mov esi,[_TableToonel]
+ pleo:  mov ax,[esi]
+        mov bx,[esi+64000]
+        xchg ah,bl
+        mov [esi],ax
+        mov [esi+64000],bx
+        add esi,2
+        add edi,2
+        loop pleo
+        ret
+
+
+msg db 13,10,"Sorry, this demo requires 8mb of extended memory !",13,10,7,"$"
+
+no_mem:         mov ax,3
+                DosInt 10h
+                lea edx,msg
+                mov ah,9
+                int 21h
+                mov ax,4c00h
+                int 21h
+
+modPos  dw 0
+
+GetModPos:      mov     ah,Get_Info
+                Int_Eos
+                mov     al,bl
+                mov     ModPos,ax
+                ret
+
+PUBLIC          textury
+textury         dw      10 DUP (?)
+PUBLIC          _obrazek
+_obrazek        dd      ?
+
+_pomek          dd      0
+
+CODE32 ENDS
+
+END Start32

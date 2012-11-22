@@ -1,0 +1,69 @@
+
+; edi-palette where is to
+; bl -how many obieg¢w in fade palette
+pal_fadein10    PROC
+                push    edi
+                call    pal_read
+                pop     edi
+                lea     esi,pal_pom
+                mov     ecx,768
+        @pv1:   mov     al,byte ptr [esi]
+                cmp     al,byte ptr [edi]
+                je      @pv2
+                cmp     al,byte ptr [edi]
+                jb      @pv3
+                sub     al,bl
+                OR      AL,AL
+                JS      @PN1
+                cmp     al,byte ptr [edi]
+                jae     @pw1
+        @PN1:   mov     al,byte ptr [edi] ;dd
+        @pw1:   mov     byte ptr [esi],al
+                jmp     @pv2
+        @pv3:   add     al,bl
+                cmp     al,byte ptr [edi]
+                jbe     @pw2
+                mov     al,byte ptr [edi] ;dd
+        @pw2:   mov     byte ptr [esi],al
+        @pv2:   inc     esi
+                inc     edi
+                loop    @pv1
+                lea     esi,pal_pom
+                call    pal_set
+                ret
+pal_fadein10    ENDP
+
+pal_read        PROC
+                lea     edi,pal_pom
+                mov     dx,03c7h
+                xor     eax,eax
+                out     dx,al
+                inc     dx
+                inc     dx
+                mov     ecx,768
+                rep     insb
+                ret
+pal_read        ENDP
+
+
+synch           PROC
+                mov     dx,03dah
+        @arpi:  in      al,dx
+                test    al,8
+                je      @arpi
+                ret
+synch           ENDP
+
+; esi-palette where is from
+pal_set         PROC
+                call    synch
+                mov     dx,03c8h
+                xor     eax,eax
+                out     dx,al
+                inc     edx
+                mov     ecx,768
+                rep     outsb
+                ret
+pal_set         ENDP
+
+pal_pom db 768 dup (?)

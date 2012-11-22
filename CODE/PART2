@@ -1,0 +1,20 @@
+
+        Vodka 0,_obrazek
+        Vodka 1,fn
+        mov ah,Allocate_selector
+        mov edi,-1
+        int_eos
+        mov w [textury+2],bx
+        Vodka 2,fn
+        mov ah,Allocate_selector
+        mov edi,-1
+        int_eos
+        mov w [textury+4],bx
+        mov w [textury+6],bx
+        mov w [textury+8],bx
+        Vodka 3,fn
+        mov ah,allocate_selector
+        mov edi,-1
+        int_eos
+        mov w [textury+10],bx
+

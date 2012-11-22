@@ -1,0 +1,182 @@
+
+;;cirlce shading
+;;x_normal=neg(x)-160
+;;y_normal=y
+
+Locals
+.386
+CODE32 SEGMENT PUBLIC PARA 'CODE' USE32
+ASSUME  CS:CODE32,DS:CODE32,ES:CODE32
+
+INCLUDE \TASM\EOS\EOS.INC
+INCLUDE ..\inc\scr.inc
+INCLUDE ..\inc\our
+;INCLUDE system.pm
+INCLUDE ..\inc\video.pm
+INCLUDE ..\inc\vodka
+INCLUDE ..\inc\pal
+
+ramki dd 0
+_pic    dd 0
+_pal    dd 0
+_bump   dd 0
+_jaszczur dd ?
+
+plee dd 0
+licznik dd 40
+
+_screen dd ?
+znika   dd 0
+
+
+PUBLIC part6
+PART6:
+        mov eax,_scr_Addr
+        mov [_screen],eax
+
+        vodka 52,_bump
+        vodka 50,_pic
+        vodka 51,_pal
+        vodka 53,_jaszczur
+
+        mov esi,o white
+        call SetPal
+
+        mov ah,wait_vbl
+        int_EOS
+
+ Keye:
+        cmp znika,63
+        jg ssss
+        inc znika
+        mov eax,znika
+        mov bl,al
+        mov edi,_pal
+        call pal_fadein10
+ ssss:
+
+        Screen0
+
+        inc plee
+        mov eax,ramki
+        cmp eax,4
+        jg sarrr
+        add licznik,1
+        jmp ooss
+ sarrr: shr eax,2
+        add licznik,eax
+ ooss:
+        mov ebx,licznik
+        and ebx,127
+        mov eax,[tablica3+ebx*8]
+        mov d [BUMPXXX],eax
+        mov eax,[tablica3+ebx*8+4]
+        mov d [BUMPYYY],eax
+
+        call CalculateBump
+
+        mov ah,wait_vbl
+        int_eos
+        mov ramki,eax
+        ekran
+
+	call GetModPos
+	cmp ModPos,1c3fh
+	jle Keye
+
+
+        ret
+
+
+
+        ALIGN 16
+        bump_X  dd ?
+        bump_Y  dd ?
+CalculateBump:
+        mov edi,[_screen]
+        XOR ESI,ESI
+        mov ebp,[_bump]
+        add edi,321
+        add esi,321
+
+        mov [bump_y],00010001h
+        BUMPYYY=$-4
+        mov ecx,197
+ L001bump:
+        push ecx
+        mov [bump_x],00010001h
+        BUMPXXX=$-4
+        mov ecx,318
+ L002bump:
+        push ecx
+        ;here goes clipping :)
+        cmp [bump_X],-128
+        jl nBump
+        cmp [bump_X],+128
+        jg nBump
+        cmp [bump_Y],-128
+        jl nBump
+        cmp [bump_Y],+128
+        jg nBump
+        ;ew.wstawic xor eax,eax xor edx,edx gdy oper.na wieksz bmp'ch
+        xor ebx,ebx
+        xor ecx,ecx
+        MOV EDI,[_PIC]
+        mov al,[EDI+esi+1]
+        mov bl,[EDI+esi-1]
+        mov cl,[EDI+ESI+320]
+        mov dl,[eDi+ESI-320]
+        sub eax,ebx
+        sub ecx,edx
+        sub eax,[bump_x]
+        jge oke1bump
+        neg eax
+ oke1bump:
+        sub ecx,[bump_y]
+        jge oke2bump
+        neg ecx
+ oke2bump:
+        mov ebx,120
+        mov edx,120
+        sub ebx,eax
+        jge oke3bump
+        xor ebx,ebx
+ oke3bump:
+        sub edx,ecx
+        jge oke4bump
+        xor edx,edx
+ oke4bump:
+        shl ebx,7
+        add ebx,edx
+        mov al,[ebp+ebx]
+        MOV EDI,[_JASZCZUR]
+        MOV BL,[EDI+ESI]
+        OR BL,BL
+        JZ DDD
+        ADD AL,128
+ DDD:
+        MOV EDI,[_SCREEN]
+        mov [edi+ESI],al
+ nBump:
+        inc edi
+        inc esi
+        inc [bump_x]
+        pop ecx
+        dec ecx
+        jnz L002bump
+
+        inc [bump_y]
+        pop ecx
+        add edi,2
+        add esi,2
+        dec ecx
+        jnz L001bump
+        ret
+
+        INCLUDE tablica3
+
+white db 768 dup (3fh)
+
+CODE32 ENDS
+
+END

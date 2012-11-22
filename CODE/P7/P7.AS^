@@ -1,0 +1,253 @@
+
+;obrazek.dat - rozmiar 160x100 o odcieniach szarosci :)
+;bufor1.dat - romiar 320*100 - nagly wyplyw wody
+
+Locals
+.386
+CODE32 SEGMENT PUBLIC PARA 'CODE' USE32
+ASSUME  CS:CODE32,DS:CODE32,ES:CODE32
+
+
+INCLUDE c:\TASM\EOS\EOS.INC
+INCLUDE ..\INC\scr.inc
+INCLUDE ..\INC\system.pm
+INCLUDE ..\INC\Video.pm
+INCLUDE ..\INC\vodka
+INCLUDE ..\INC\our
+INCLUDE ..\INC\pal
+;INCLUDE video.pm
+INCLUDE water.pm
+
+ramki dd 0
+
+_obrazek dd ?
+_paleta  dd ?
+_bufor1 dd ?
+_bufor2 dd ?
+_bufor3 dd ?
+npage   dd 0
+
+_obrazek2       dd ?
+
+ofset dd 0
+x_of    dd 10
+y_of    dd 50
+x_jest  db 0
+y_jest  db 0
+
+licznik dd 0
+
+_pulse  dd ?
+_pulseW dd ?
+
+znikanie dd 0
+
+PUBLIC part7
+PART7:
+        mov eax,_scr_Addr
+        mov [_screen],eax
+
+        vodka   69,_paleta
+        vodka   68,_obrazek2
+
+        AllocateMemory  320*100,_bufor3
+        AllocateMemory  160*100,_obrazek
+        AllocateMemoryFree 32000,_bufor1
+        AllocateMemoryFree 32000,_bufor2
+
+        mov ah,Wait_Vbl
+        int_EOS
+
+ FFirst:
+        vodka   56,_pulse
+        vodka   57,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ First:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01d1fh
+        jg SSecond
+        jmp first
+ SSecond:
+        vodka   58,_pulse
+        vodka   59,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Second:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01d3fh
+        jg TThird
+        jmp Second
+ TThird:
+        vodka   60,_pulse
+        vodka   61,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Third:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01e1fh
+        jg FFourth
+        jmp Third
+ FFourth:
+        vodka   62,_pulse
+        vodka   63,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Four:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01e3fh
+        jg FFiveth
+        jmp Four
+ FFiveth:
+        vodka   64,_pulse
+        vodka   65,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Five:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01f1fh
+        jg FSixth
+        jmp Five
+ FSixth:
+        vodka   66,_pulse
+        vodka   67,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Six:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,01f3fh
+        jg SSeventh
+        jmp Six
+ SSeventh:
+        vodka   54,_pulse
+        vodka   55,_pulseW
+        call mieszanie
+        lea esi,white
+        call pal_set
+        mov esi,_paleta
+        call pal_set
+ Seven:
+        include woda
+        call drawWater
+        call calculateWater
+        inc nPage
+        mov ah,wait_vbl
+        int_EOS
+        mov ramki,eax
+        Ekran
+        call GetModPos
+        cmp ModPos,02014h
+        jl hereee
+        mov ax,ModPos
+        and ax,03fh
+        sub al,14h
+        mov bl,al
+        mov edi,o white
+        call pal_fadein10
+        mov esi,_paleta
+        call pal_set
+ hereee:
+        cmp ModPos,0203fh
+        jge SEighth
+        jmp Seven
+ SEighth:
+
+        ret
+
+
+mieszanie:
+        mov esi,_pulseW
+        mov edi,_bufor1
+        mov ecx,32000/4
+        rep movsd
+
+        mov ebp,_obrazek2
+        mov edi,_obrazek
+        mov esi,_pulse
+        mov ecx,160*100
+ opq:   mov al,[esi]
+        or al,al
+        jz opa
+        mov [edi],al
+        jmp kop
+ opa:   mov al,[ebp]
+        mov [edi],al
+ kop:   inc esi
+        inc edi
+        inc ebp
+        dec ecx
+        jnz opq
+        ret
+
+INCLUDE tablica3
+white db 768 dup (63)
+
+CODE32 ENDS
+
+END Start32

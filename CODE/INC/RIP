@@ -1,0 +1,14 @@
+	jmp rip
+	licznikWat dd 0
+	INCLUDE inc\tablica3
+rip:
+	mov eax,licznikWat
+	and eax,127
+	mov ebx,[tablica3+eax*4]
+	mov esi,_bufor1
+	add esi,ebx
+	mov b [esi],0ffh
+	mov b [esi+1],0ffh
+	mov b [esi+256],0ffh
+	mov b [esi+256],0ffh
+	inc licznikWat

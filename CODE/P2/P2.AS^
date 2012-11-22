@@ -1,0 +1,531 @@
+
+;sesss=1
+
+Jumps
+Locals
+.386
+CODE32 SEGMENT PUBLIC PARA 'CODE' USE32
+ASSUME  CS:CODE32,DS:CODE32,ES:CODE32
+
+INCLUDE ..\inc\world
+INCLUDE c:\TASM\EOS\EOS.INC
+INCLUDE ..\inc\video.pm
+INCLUDE ..\inc\system.pm
+INCLUDE ..\inc\vars.pm
+INCLUDE ..\inc\math.pm
+INCLUDE ..\inc\bitsort.pm
+INCLUDE ..\inc\mrotate.pm
+INCLUDE ..\inc\objects.pm
+INCLUDE ..\inc\pixel2d.pm
+INCLUDE ..\inc\persp.pm
+INCLUDE ..\inc\visible.pm
+INCLUDE ..\inc\normals.pm
+INCLUDE ..\inc\virtual.inc
+include ..\inc\txtr.inc
+include ..\inc\our
+include pal
+include ..\inc\scr.inc
+include ..\inc\vodka
+
+ALIGN 16
+
+
+;_pal dd ?
+fn dd ?
+
+;for waterWorld
+;_bufor1 dd ?
+;_bufor2 dd ?
+EXTRN _obrazek :DWORD ;dd ?
+_waterWorld dd ?
+
+ramki   dd 0
+_worldd dd ?
+
+obroty  dd 22,22,8
+        dd 22,22,8
+        dd -22,22,8 ;2
+        dd -22,22,8
+        dd -22,22,8
+        dd -22,22,8
+        dd -22,-22,8 ;6
+        dd -22,-22,8
+        dd -22,-22,8
+        dd -22,-22,8
+        dd -22,-22,-13 ;A
+        dd -22,-22,-13
+        dd -22,-22,-13
+        dd -22,-22,-13
+        dd -3,-14,12 ;E
+        dd -3,-14,12
+        ;na wypadek :)
+        dd -3,-14,12
+        dd -3,-14,12
+        dd -3,-14,12
+        dd -3,-14,12
+widoki label dword
+        INCLUDE widoki
+
+plum dd 1
+lampa   db 0
+
+ileFadow        db 0
+
+sun dd 0
+sun_step dd 0
+bolek dd 1
+stary dd 0
+znacznik dd 0
+
+spos dd 1
+
+        INCLUDE world.p!
+
+        public part2
+part2:
+
+        mov gs,_scrSel
+        mov eax,_scr_addr
+        mov _screen,eax
+        mov edi,eax
+        xor eax,eax
+        mov ecx,16000
+        rep stosd
+        call SortMem
+
+        AllocateMemoryFree 128*2*128,_bufor1
+        AllocateMemoryFree 128*2*128,_bufor2
+        AllocateMemory 256*256,_waterWorld
+        mov esi,eax
+        mov ah,Allocate_selector
+        mov edi,-1
+        int_eos
+        mov w [textury+0],bx
+        mov fs,bx
+
+        vodka 16,sun
+
+        LoadObject 12,0
+        LoadObject 13,0
+        LoadObject 14,0
+        LoadObject 15,0
+
+        mov edx,64000h
+        mov ah,allocate_memory
+        int_eos
+        mov stary,edx
+
+        mov ebx,d [first_ruch]
+        mov CameraX,ebx
+        mov ebx,d [first_ruch+4]
+        mov CameraY,ebx
+        mov ebx,d [first_ruch+8]
+        mov CameraZ,ebx
+        mov ebx,d [first_ruch+12]
+        mov EyeAx,ebx
+        mov ebx,d [first_ruch+16]
+        mov EyeAy,ebx
+        mov ebx,d [first_ruch+20]
+        mov EyeAz,ebx
+ Main:
+        cmp     ileFadow,63
+        jg      nicosc
+        cmp     ileFadow,63*2
+        jle     here_we_are
+        mov     ileFadow,63
+        jmp     _out_of_fer
+  here_we_are:
+        inc     ileFadow
+  _out_of_fer:
+        mov     bl,ilefadow
+        sar     bl,1
+        mov     edi,_pal
+        call    pal_fadein10
+  nicosc:
+
+        call    GetModPos
+
+        cmp     ModPos,63fh
+        jle     ruchamy
+
+        cmp znacznik,1
+        je nocop
+        mov znacznik,1
+        mov esi,_screen
+        mov edi,stary
+        mov ecx,16000
+        rep movsd
+
+nocop:  movzx   eax,ModPos
+        and     eax,3fh
+        shl     eax,2
+        mov     ebx,eax
+        shl     eax,3
+        sub     eax,ebx
+        mov     ebx,[widoki+eax]
+        mov     CameraX,ebx
+        mov     ebx,[widoki+eax+4]
+        mov     CameraY,ebx
+        mov     ebx,[widoki+eax+8]
+        mov     CameraZ,ebx
+        mov     ebx,[widoki+eax+12]
+        mov     eyeAX,ebx
+        mov     ebx,[widoki+eax+16]
+        mov     eyeAY,ebx
+        mov     ebx,[widoki+eax+20]
+        mov     eyeAZ,ebx
+        cmp     d [widoki+eax+24],0
+        jz      yaaa
+        movzx   eax,ModPos
+        cmp     plum,eax
+        je      yaaa
+        lea     esi,white
+        call    pal_set
+        neg bolek
+        jmp     yaaa
+ ruchamy:
+        mov eax,trasa_ruch
+        mov ebx,24
+        mul ebx
+        mov ebx,d [trasa+eax]
+        mov CameraX,ebx
+        mov ebx,d [trasa+eax+4]
+        mov CameraY,ebx
+        mov ebx,d [trasa+eax+8]
+        mov CameraZ,ebx
+        mov ebx,d [trasa+eax+12]
+        mov EyeAx,ebx
+        mov ebx,d [trasa+eax+16]
+        mov EyeAy,ebx
+        mov ebx,d [trasa+eax+20]
+        mov EyeAz,ebx
+        cmp ModPos,500h
+        jle out_of_ruching
+
+        cmp lampa,0
+        jne blysk_no
+        mov lampa,1
+        mov esi,o white
+        call pal_set
+        mov esi,[_pal]
+        call pal_set
+ blysk_no:
+
+        mov eax,ramki
+        add trasa_ruch,eax
+        cmp ModPos,600h
+        jge inaczej
+        shl eax,1
+        add d [world+6*4],eax
+        shl eax,1
+        add d [world+7*4],eax
+
+        lea esi,World
+        mov ecx,worldsobjects
+ katys: mov eax,[esi+32]
+        add [esi+20],eax
+        mov eax,[esi+36]
+        add [esi+24],eax
+        mov eax,[esi+40]
+        add [esi+28],eax
+        add esi,48
+        dec ecx
+        jnz katys
+
+        jmp yaaa
+inaczej:
+        movzx eax,w ModPos
+        and eax,00fh
+        lea eax,[eax*2+eax]
+        mov ebx,[obroty+eax*4]
+        add [world+20],ebx
+        mov ebx,[obroty+eax*4+4]
+        add [world+24],ebx
+        mov ebx,[obroty+eax*4+8]
+        add [world+28],ebx
+        jmp yaaa
+out_of_ruching:
+        mov eax,ramki
+        cmp eax,4
+        jg ksdk
+        mov eax,1
+        add trasa_ruch,eax
+        jmp yaaa
+ ksdk:  sar eax,2
+        add trasa_ruch,eax
+yaaa:
+        movzx eax,ModPos
+        mov plum,eax
+        Screen0
+
+        call MakeCameraMatrix
+        call CalculateVisiblating
+        call VirSort
+
+;        lea esi,World
+;        mov ecx,worldsobjects
+; katys: mov eax,[esi+32]
+;        add [esi+20],eax
+;        mov eax,[esi+36]
+;        add [esi+24],eax
+;        mov eax,[esi+40]
+;        add [esi+28],eax
+;        add esi,48
+;        dec ecx
+;        jnz katys
+
+        lea esi,WorldKol
+        mov ecx,worldsObjects
+ heyaPoSwiecie:
+        push esi ecx
+        mov ebx,[esi]   ;kolejnosc
+        shl ebx,4
+        lea ebx,[ebx*2+ebx]
+        cmp d [World+ebx],0
+        je NOvisW
+        mov edx,d [World+ebx+16] ;objekt number
+        mov eax,d [World+ebx+44]
+        mov ax,w [textury+eax*2]
+        mov fs,ax
+        call prepareObjectVirtual
+        drawObject edx
+ noVisW:
+        pop ecx esi
+        add esi,4
+        dec ecx
+        jnz heyaPoSwiecie
+
+        mov ah,wait_vbl
+        int_eos
+        mov ramki,eax
+
+        call sloneczko
+
+        cmp ModPos,730h
+        jge wodda
+
+        Ekran
+
+        cmp     ileFadow,63
+        jle     currant
+        mov     esi,_pal
+        call    pal_set
+currant:
+        IFDEF sesss
+                ret
+        ENDIF
+
+        jmp     Main
+;        KeyTo Escape,Main
+
+wodda:
+        lea     esi,white
+        call    pal_set
+        call pikus
+
+        mov esi,stary
+        mov edi,_0a0000h
+        mov ecx,16000
+        rep movsd
+
+        mov ah,wait_vbl
+        int_eos
+        mov     esi,_pal
+        call    pal_set
+
+        mov     d [world+32],16
+        mov     d [world+36],6
+        mov     d [world+40],2
+
+ Main2:
+
+        call    GetModPos
+
+        mov ebx,1
+        movzx eax,ModPos
+        cmp spos,eax
+        je nothis
+        and   eax,3
+        jnz as
+        neg ebx
+as:     mov   eax,[world+32]
+        imul  ebx
+        mov   [world+32],eax
+nothis: movzx eax,ModPos
+        mov spos,eax
+
+        mov eax,trasa_ruch
+        mov ebx,24
+        mul ebx
+        mov ebx,d [trasa+eax]
+        mov CameraX,ebx
+        mov ebx,d [trasa+eax+4]
+        mov CameraY,ebx
+        mov ebx,d [trasa+eax+8]
+        mov CameraZ,ebx
+        mov ebx,d [trasa+eax+12]
+        mov EyeAx,ebx
+        mov ebx,d [trasa+eax+16]
+        mov EyeAy,ebx
+        mov ebx,d [trasa+eax+20]
+        mov EyeAz,ebx
+        mov eax,ramki
+        add trasa_ruch,eax
+
+        movzx eax,ModPos
+        mov plum,eax
+        Screen0
+
+        call MakeCameraMatrix
+        call CalculateVisiblating
+        call VirSort
+
+        lea esi,World
+        mov ecx,worldsobjects
+ katyz: mov eax,[esi+32]
+        add [esi+20],eax
+        mov eax,[esi+36]
+        add [esi+24],eax
+        mov eax,[esi+40]
+        add [esi+28],eax
+        add esi,48
+        dec ecx
+        jnz katyz
+
+        lea esi,WorldKol
+        mov ecx,worldsObjects
+ heyaPoSwiecie2:
+        push esi ecx
+        mov ebx,[esi]   ;kolejnosc
+        shl ebx,4
+        lea ebx,[ebx*2+ebx]
+        cmp d [World+ebx],0
+        je NOvisW2
+        mov edx,d [World+ebx+16] ;objekt number
+        mov eax,d [World+ebx+44]
+        mov ax,w [textury+eax*2]
+        mov fs,ax
+        call prepareObjectVirtual
+        drawObject edx
+ noVisW2:
+        pop ecx esi
+        add esi,4
+        dec ecx
+        jnz heyaPoSwiecie2
+
+        mov ah,wait_vbl
+        int_eos
+        mov ramki,eax
+
+        call    GetModPos
+
+        cmp ModPos,800h
+        jl wra
+        mov ax,ModPos
+        and ax,03fh
+        cmp ax,20h
+        jge dwar
+        mov bolek,1
+        jmp wra
+dwar:   mov bolek,-1
+
+wra:    call sloneczko
+
+        cmp     ModPos,0b20h
+        jl      parker
+        movzx   eax,ModPos
+        and     eax,31
+        shl     eax,1
+        mov     bl,al
+        mov     edi,o white
+        call    pal_fadein10
+        mov     esi,[_pal]
+        call    pal_set
+ parker:
+
+        cmp     ModPos,0b3fh
+        jle     pozycja
+        jmp     spadamy
+ pozycja:
+
+        Ekran
+
+        jmp     Main2
+ spadamy:
+
+        ;KeyTo Escape,Main2
+
+        mov fs,Zero_sel
+        mov gs,Zero_sel
+
+        rept 12
+        mov ah,deallocate_memory
+        int_eos
+        endm
+
+        mov ah,deallocate_selector
+        mov bx,w [textury+6]
+        int_EOS
+        mov ah,deallocate_selector
+        mov bx,w [textury+4]
+        int_EOS
+        mov ah,deallocate_selector
+        mov bx,w [textury+2]
+        int_EOS
+        mov ah,deallocate_selector
+        mov bx,w [textury]
+        int_EOS
+        ret
+
+sloneczko:
+        cmp sun_step,36
+        jl sun_ok1
+        sub sun_step,35
+sun_ok1:
+        cmp sun_step,0
+        jg sun_ok2
+        add sun_step,35
+sun_ok2:
+        mov esi,sun_step
+        shl esi,12
+        add esi,sun
+        mov edi,_screen
+        add edi,((205-64)*320)+254
+        mov ecx,64
+sp1:    mov ebp,64
+sp2:    lodsb
+        or al,al
+        jz sun_sk
+        mov [edi],al
+sun_sk: inc edi
+        dec ebp
+        jnz sp2
+        add edi,320-64
+        dec ecx
+        jnz sp1
+
+        mov ebx,bolek
+        mov eax,ramki
+        cmp eax,4
+        jle plo
+        shr eax,2
+        jmp doit
+plo:    mov eax,1
+doit:   imul ebx
+        add sun_step,eax
+        ret
+
+_torus dd ?
+
+INCLUDE water\water
+
+trasa_ruch      dd 0
+first_ruch label dword
+trasa label dword
+INCLUDE trasa.!
+
+white db 768 dup (3fh)
+
+CODE32 ENDS
+
+END Start32
